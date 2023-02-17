@@ -154,7 +154,7 @@
 
   function checkRegistrationStatus() {
     // Define the URLs
-    const confirmationUrl = 'https://temp-mail.org/en/?visited=true';
+    const tempMailUrl = 'https://temp-mail.org/en/';
     const registerUrl = 'https://klavogonki.ru/register/';
 
     // Get the main container
@@ -173,7 +173,7 @@
       console.log('Registration successful!');
       // Redirect to the confirmation page after 1 second
       setInterval(() => {
-        window.location.href = confirmationUrl;
+        window.location.href = tempMailUrl;
       }, 1000);
     } else {
       // Check for an error message

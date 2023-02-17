@@ -10,53 +10,27 @@
 
 (function () {
 
-  // Global references
+  const mailBox = document.querySelector('.inboxWarpMain');
   const emailInput = document.querySelector('#mail');
+  const deleteButton = document.querySelector('#click-to-delete');
   const registerUrlDomain = 'https://klavogonki.ru/register/';
 
-  // Define the mailbox container and delete button
-  const mailBox = document.querySelector('.inboxWarpMain');
+  // Add a click event listener to the delete button
+  deleteButton.addEventListener('click', function () {
+    console.log('Email address deleted by user.');
+    // Remove the "confirmation_Status" key from localStorage
+    localStorage.removeItem('confirmation_Status');
+  });
 
-  // Define the function that will look for and click the child element with a data-mail-id attribute
-  const clickMailMessage = () => {
-    let mailMessage = mailBox.querySelector('a[data-mail-id]');
-    if (mailMessage) {
-      setTimeout(() => {
-        mailMessage.click();
-      }, 1000);
-    }
-  };
-
-  // Define the function that will look for and click the child element with an href containing 'confirm'
-  const clickConfirmRegistration = () => {
-    let confirmRegistration = mailBox.querySelector('a[href*="confirm"]');
-    if (confirmRegistration) {
-      setTimeout(() => {
-        // Store the confirmation link address
-        let confirmationAddress = confirmRegistration.href;
-        // Navigate to the confirmation link
-        window.location.href = confirmationAddress;
-      }, 1000);
-    }
-  };
-
-  // Set up a mutation observer to watch for changes in the mailBox and trigger the clickMailMessage function
-  const mailMessageObserver = new MutationObserver(() => clickMailMessage());
-  mailMessageObserver.observe(mailBox, { childList: true, subtree: true });
-
-  // Set up a mutation observer to watch for changes in the mailBox and trigger the clickConfirmRegistration function
-  const confirmRegistrationObserver = new MutationObserver(() => clickConfirmRegistration());
-  confirmRegistrationObserver.observe(mailBox, { childList: true, subtree: true });
-
-
-  // Get the URL parameters and check if the "visited" parameter is set to "true"
-  const urlParams = new URLSearchParams(window.location.search);
-  const visited = urlParams.get('visited');
-  if (visited === 'true') {
-    // Exit the function because the page has already been visited
-    return;
+  function deleteEmail() {
+    console.log('Email address deleted with function.');
+    // Remove the "confirmation_Status" key from localStorage
+    localStorage.removeItem('confirmation_Status');
+    // Trigger the click event on the delete button
+    deleteButton.click();
   }
 
+  // Waiting for the email value to grab
   const observer = new MutationObserver(function (mutationsList) {
     for (let mutation of mutationsList) {
       if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
@@ -67,11 +41,20 @@
           let tempMailAddress = emailInput.value;
           let encodedTempMail = encodeURIComponent(tempMailAddress);
           let encodedRegisterUrl = registerUrlDomain + '?email=' + encodedTempMail;
-          // Set the "visited" parameter to "true" and redirect to the register URL
-          urlParams.set('visited', 'true');
-          let newUrl = window.location.pathname + '?' + urlParams.toString();
-          window.history.replaceState({}, '', newUrl);
-          window.location.href = encodedRegisterUrl;
+          // Check status if "waiting"
+          const status = localStorage.getItem('confirmation_Status');
+          if (status === 'waiting') {
+            console.log('Waiting for email confirmation');
+            return; // stop the navigation to the register page
+          }
+          // Push to the localStorage data waiting what will indicated the email address already is grabbed and used for registration
+          if (status === null) {
+            localStorage.setItem('confirmation_Status', 'waiting');
+          }
+          // Redirect to the register URL with the email parameter only
+          if (status !== 'expired') {
+            window.location.href = encodedRegisterUrl;
+          }
         }
       }
     }
@@ -79,6 +62,45 @@
 
   observer.observe(emailInput, { attributes: true });
 
-})();
+  // Define the function that will open new message inside mailbox
+  function clickMailMessage() {
+    const mailMessage = mailBox.querySelector('a[data-mail-id]');
+    if (mailMessage) {
+      setTimeout(() => {
+        console.log('Mail message found. Opening...');
+        mailMessage.click();
+      }, 1000);
+    } else {
+      console.log('Mail message not found.');
+    }
+  }
 
-const registerForm = document.querySelector('#register');
+  // Define the function that will wait for confirmation link and click
+  const clickConfirmRegistration = () => {
+    // Get the confirmation link from the email
+    const confirmRegistration = mailBox.querySelector('a[href*="confirm"]');
+
+    if (!confirmRegistration) {
+      return;
+    }
+
+    const status = localStorage.getItem('confirmation_Status');
+
+    if (status === 'waiting') {
+      console.log('Confirming the registration by navigating to the registration page.');
+      localStorage.setItem('confirmation_Status', 'expired');
+      confirmRegistration.click();
+    } else if (status === 'expired') {
+      deleteEmail();
+    }
+  };
+
+  // Set up a mutation observer to watch for new message
+  const mailMessageObserver = new MutationObserver(() => clickMailMessage());
+  mailMessageObserver.observe(mailBox, { childList: true, subtree: true });
+
+  // Set up a mutation observer to watch for confirmation link
+  const confirmRegistrationObserver = new MutationObserver(() => clickConfirmRegistration());
+  confirmRegistrationObserver.observe(mailBox, { childList: true, subtree: true });
+
+})();
