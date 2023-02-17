@@ -10,9 +10,12 @@
 
 (function () {
 
+  // Global references
+  const emailInput = document.querySelector('#mail');
+  const registerUrlDomain = 'https://klavogonki.ru/register/';
+
   // Define the mailbox container and delete button
   const mailBox = document.querySelector('.inboxWarpMain');
-  let deleteMailAddress = document.querySelector('.click-to-delete');
 
   // Define the function that will look for and click the child element with a data-mail-id attribute
   const clickMailMessage = () => {
@@ -29,6 +32,7 @@
     let confirmRegistration = mailBox.querySelector('a[href*="confirm"]');
     if (confirmRegistration) {
       setTimeout(() => {
+        // Store the confirmation link address
         let confirmationAddress = confirmRegistration.href;
         // Navigate to the confirmation link
         window.location.href = confirmationAddress;
@@ -44,8 +48,6 @@
   const confirmRegistrationObserver = new MutationObserver(() => clickConfirmRegistration());
   confirmRegistrationObserver.observe(mailBox, { childList: true, subtree: true });
 
-  const emailInput = document.querySelector('#mail');
-  const registerUrlDomain = 'https://klavogonki.ru/register/';
 
   // Get the URL parameters and check if the "visited" parameter is set to "true"
   const urlParams = new URLSearchParams(window.location.search);
