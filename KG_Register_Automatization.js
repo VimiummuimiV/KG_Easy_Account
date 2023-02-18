@@ -11,7 +11,6 @@
 
 (function () {
 
-
   // Function to run code on "klavogonki.ru"
   function KG_RUNNER() {
 
@@ -107,6 +106,14 @@
       const urlParams = new URLSearchParams(window.location.search);
       const email = urlParams.get('email');
       if (email) {
+        // Delete nickname and update email in localStorage
+        // Retrieve the current value of the accountRegisterData key from local storage
+        let accountRegisterData = JSON.parse(localStorage.getItem('accountRegisterData'));
+        // Update the password value
+        accountRegisterData[0] = ''; // Empty login string
+        accountRegisterData[1] = email; // New email
+        // Save the updated value back to local storage
+        localStorage.setItem('accountRegisterData', JSON.stringify(accountRegisterData));
         // Remove the email parameter from the URL
         urlParams.delete('email');
         const newUrl = window.location.pathname + '?' + urlParams.toString();
@@ -115,6 +122,7 @@
         // Set the email value in the register_email input element
         const registerEmail = document.querySelector('#register_email');
         registerEmail.value = email;
+        focusLoginInput();
 
         return email;
       }
