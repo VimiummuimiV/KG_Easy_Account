@@ -18,36 +18,26 @@
   const registerSubmitButton = document.querySelector('#register_submit_button');
 
   // Define a function to generate a random password using only letters and digits
-  function generatePassword() {
+  const generatePassword = () => {
     // Define a regular expression that matches only letters (lowercase and uppercase) and digits
     const charset = /[a-zA-Z0-9]/;
 
     // Generate a random password length between 10 and 20 characters
     const length = Math.floor(Math.random() * 11) + 10;
 
-    // Initialize an empty string to hold the password
-    let password = "";
-
-    // Loop through the desired length of the password
-    for (let i = 0; i < length; i++) {
-      // Get a random character using the helper function getRandomChar
-      let randomChar = getRandomChar();
+    // Generate an array of random characters with the desired length
+    const passwordChars = Array.from({ length }, () => {
+      let char;
       // Loop until the random character matches the character set defined by the charset regular expression
-      while (!charset.test(randomChar)) {
-        randomChar = getRandomChar();
-      }
-      // Add the random character to the password
-      password += randomChar;
-    }
+      do {
+        char = String.fromCharCode(Math.floor(Math.random() * 62) + 48);
+      } while (!charset.test(char));
+      return char;
+    });
 
-    // Return the generated password
-    return password;
-  }
-
-  // Define a helper function to get a random character
-  function getRandomChar() {
-    return String.fromCharCode(Math.floor(Math.random() * 62) + 48);
-  }
+    // Join the array of characters into a string and return the generated password
+    return passwordChars.join('');
+  };
 
   // Fill the password in the password fields
   function fillPassword() {
