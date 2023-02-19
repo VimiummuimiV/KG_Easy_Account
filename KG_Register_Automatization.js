@@ -101,32 +101,41 @@
     // Observe the state of the submit button
     observeSubmitButtonState(registerSubmitButton);
 
-    // Retrieve email address from the browser search bar
     function getTempMailAddress() {
       const urlParams = new URLSearchParams(window.location.search);
       const email = urlParams.get('email');
-      if (email) {
-        // Delete nickname and update email in localStorage
-        // Retrieve the current value of the accountRegisterData key from local storage
-        let accountRegisterData = JSON.parse(localStorage.getItem('accountRegisterData'));
-        // Update the password value
-        accountRegisterData[0] = ''; // Empty login string
-        accountRegisterData[1] = email; // New email
-        // Save the updated value back to local storage
-        localStorage.setItem('accountRegisterData', JSON.stringify(accountRegisterData));
-        // Remove the email parameter from the URL
-        urlParams.delete('email');
-        const newUrl = window.location.pathname + '?' + urlParams.toString();
-        window.history.replaceState({}, '', newUrl);
 
-        // Set the email value in the register_email input element
-        const registerEmail = document.querySelector('#register_email');
-        registerEmail.value = email;
-        focusLoginInput();
-
-        return email;
+      if (!email) {
+        // If the email parameter doesn't exist in the URL, return early
+        return null;
       }
-      return null;
+
+      // Retrieve the current value of the accountRegisterData key from local storage
+      let accountRegisterData = JSON.parse(localStorage.getItem('accountRegisterData'));
+
+      if (!accountRegisterData) {
+        // If the accountRegisterData key doesn't exist in local storage, create it with default values
+        accountRegisterData = ['', email];
+        localStorage.setItem('accountRegisterData', JSON.stringify(accountRegisterData));
+      } else {
+        // If the accountRegisterData key exists in local storage, update the email if necessary
+        if (accountRegisterData[1] !== email) {
+          accountRegisterData[1] = email;
+          localStorage.setItem('accountRegisterData', JSON.stringify(accountRegisterData));
+        }
+      }
+
+      // Remove the email parameter from the URL
+      urlParams.delete('email');
+      const newUrl = window.location.pathname + '?' + urlParams.toString();
+      window.history.replaceState({}, '', newUrl);
+
+      // Set the email value in the register_email input element
+      const registerEmail = document.querySelector('#register_email');
+      registerEmail.value = email;
+      focusLoginInput();
+
+      return email;
     }
 
     getTempMailAddress();
@@ -143,6 +152,43 @@
           registerLogin.value = login;
           registerEmail.value = email;
         }, 2000);
+      }
+    }
+
+    // Save account into "localStorage" key "accountSavedData" if registration succeed
+    function saveAccount() {
+      // Get accountRegisterData from localStorage
+      const accountRegisterData = JSON.parse(localStorage.getItem('accountRegisterData'));
+
+      // Get accountSavedData from localStorage
+      const accountSavedData = JSON.parse(localStorage.getItem('accountSavedData'));
+
+      // Check if the accountRegisterData already exists in the accountSavedData array
+      const existsInSavedData = accountSavedData && // Check that accountSavedData is truthy
+        // Check that accountSavedData is an array
+        Array.isArray(accountSavedData) &&
+        // Check if at least one element of accountSavedData satisfies the following condition:
+        accountSavedData.some(savedData =>
+          /* Compare the stringified version of savedData
+          with the stringified version of accountRegisterData to see if they are equal */
+          JSON.stringify(savedData) === JSON.stringify(accountRegisterData)
+        );
+
+      // If the accountRegisterData doesn't already exist in the accountSavedData array, add it to the array
+      if (!existsInSavedData) {
+        let newSavedData;
+
+        // If accountSavedData is not an array, create a new array with accountRegisterData as the first element
+        if (!Array.isArray(accountSavedData)) {
+          newSavedData = [accountRegisterData];
+        } else {
+          // If accountSavedData is an array, push accountRegisterData to the end of the array
+          accountSavedData.push(accountRegisterData);
+          newSavedData = accountSavedData;
+        }
+
+        // Store the new accountSavedData in localStorage
+        localStorage.setItem('accountSavedData', JSON.stringify(newSavedData));
       }
     }
 
@@ -165,6 +211,11 @@
 
       if (successMessage) {
         console.log('Registration successful!');
+        // Save account into "localStorate" key "accountSavedData"
+        saveAccount();
+        // Delete temporary used "localStorage" key "accountRegisterData"
+        localStorage.removeItem('accountRegisterData');
+
         // Redirect to the confirmation page after 1 second
         setInterval(() => {
           window.location.href = tempMailUrl;
@@ -192,15 +243,20 @@
     // Check the registration status
     checkRegistrationStatus();
 
-    registerSubmitButton.addEventListener('click', () => {
-      // Get the login and email values from the form fields
+    registerLogin.addEventListener('keyup', () => {
+      // Get the login value from the form field
       const login = registerLogin.value;
+      // Get the email value from the form field
       const email = registerEmail.value;
 
-      // Combine the login and email values into an array
-      const accountRegisterData = [login, email];
+      // Get the existing accountRegisterData from localStorage
+      let accountRegisterData = JSON.parse(localStorage.getItem('accountRegisterData')) || ['', ''];
 
-      // Store the account register data array in localStorage
+      // Update the login and email value in the accountRegisterData array
+      accountRegisterData[0] = login;
+      accountRegisterData[1] = email;
+
+      // Store the updated account register data array in localStorage
       localStorage.setItem('accountRegisterData', JSON.stringify(accountRegisterData));
     });
 
