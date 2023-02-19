@@ -285,21 +285,23 @@
 
     // Define function to check for the status key availability
     function checkStatusKey() {
-      const status = localStorage.getItem('confirmation_Status');
-      if (status === null) {
-        console.log('Assigning proper status data to make observer work properly.');
-        localStorage.setItem('confirmation_Status', 'welcome');
-      }
-      // Redirect to the register URL with the email parameter only
-      else if (status === 'copied') {
-        localStorage.setItem('confirmation_Status', 'waiting');
-        console.log("Waiting for confirmation message.")
-      }
-      // Delete used email address
-      else if (status === 'expired') {
-        // Function already has logic to assign status welcome before deleting
-        deleteEmail();
-      }
+      setTimeout(() => {
+        const status = localStorage.getItem('confirmation_Status');
+        if (status === null) {
+          console.log('Assigning proper status data to make observer work properly.');
+          localStorage.setItem('confirmation_Status', 'welcome');
+        }
+        // Redirect to the register URL with the email parameter only
+        else if (status === 'copied') {
+          localStorage.setItem('confirmation_Status', 'waiting');
+          console.log("Waiting for confirmation message.")
+        }
+        // Delete used email address
+        else if (status === 'expired') {
+          // Function already has logic to assign status welcome before deleting
+          deleteEmail();
+        }
+      }, 1000);
     }
 
     checkStatusKey();
