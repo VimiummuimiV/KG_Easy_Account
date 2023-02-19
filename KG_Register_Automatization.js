@@ -272,18 +272,37 @@
 
     // Add a click event listener to the delete button
     deleteButton.addEventListener('click', function () {
+      localStorage.setItem('confirmation_Status', 'welcome');
       console.log('Email address deleted by user.');
-      // Remove the "confirmation_Status" key from localStorage
-      localStorage.removeItem('confirmation_Status');
     });
 
+    // Define function to delete email address by script logic
     function deleteEmail() {
-      console.log('Email address deleted with function.');
-      // Remove the "confirmation_Status" key from localStorage
-      localStorage.removeItem('confirmation_Status');
-      // Trigger the click event on the delete button
+      localStorage.setItem('confirmation_Status', 'welcome');
+      console.log('Email address deleted by function.');
       deleteButton.click();
     }
+
+    // Define function to check for the status key availability
+    function checkStatusKey() {
+      const status = localStorage.getItem('confirmation_Status');
+      if (status === null) {
+        console.log('Assigning proper status data to make observer work properly.');
+        localStorage.setItem('confirmation_Status', 'welcome');
+      }
+      // Redirect to the register URL with the email parameter only
+      else if (status === 'copied') {
+        localStorage.setItem('confirmation_Status', 'waiting');
+        console.log("Waiting for confirmation message.")
+      }
+      // Delete used email address
+      else if (status === 'expired') {
+        // Function already has logic to assign status welcome before deleting
+        deleteEmail();
+      }
+    }
+
+    checkStatusKey();
 
     // Waiting for the email value to grab
     const observer = new MutationObserver(function (mutationsList) {
@@ -298,16 +317,10 @@
             let encodedRegisterUrl = registerUrlDomain + '?email=' + encodedTempMail;
             // Check status if "waiting"
             const status = localStorage.getItem('confirmation_Status');
-            if (status === 'waiting') {
-              console.log('Waiting for email confirmation');
-              return; // stop the navigation to the register page
-            }
-            // Push to the localStorage data waiting what will indicated the email address already is grabbed and used for registration
-            if (status === null) {
-              localStorage.setItem('confirmation_Status', 'waiting');
-            }
-            // Redirect to the register URL with the email parameter only
-            if (status !== 'expired') {
+            // Push to the localStorage data copied if the fresh visit
+            if (status === 'welcome') {
+              localStorage.setItem('confirmation_Status', 'copied');
+              console.log("Grabbed fresh email address. Navigating to registration page.")
               window.location.href = encodedRegisterUrl;
             }
           }
@@ -317,38 +330,48 @@
 
     observer.observe(emailInput, { attributes: true });
 
-    // Define the function that will open new message inside mailbox
     function clickMailMessage() {
-      const mailMessage = mailBox.querySelector('a[data-mail-id]');
-      if (mailMessage) {
-        setTimeout(() => {
-          console.log('Mail message found. Opening...');
-          mailMessage.click();
-        }, 1000);
-      } else {
-        console.log('Mail message not found.');
-      }
-    }
-
-    // Define the function that will wait for confirmation link and click
-    const clickConfirmRegistration = () => {
-      // Get the confirmation link from the email
-      const confirmRegistration = mailBox.querySelector('a[href*="confirm"]');
-
-      if (!confirmRegistration) {
-        return;
-      }
-
+      // Check status if "waiting"
       const status = localStorage.getItem('confirmation_Status');
 
       if (status === 'waiting') {
-        console.log('Confirming the registration by navigating to the registration page.');
-        localStorage.setItem('confirmation_Status', 'expired');
-        confirmRegistration.click();
-      } else if (status === 'expired') {
-        deleteEmail();
+        // Get the message item
+        const mailMessage = mailBox.querySelector('a[data-mail-id]');
+
+        if (!mailMessage) {
+          return;
+        }
+
+        setTimeout(() => {
+          console.log('Opening email message.');
+          mailMessage.click();
+        }, 1000);
+      } else {
+        console.log('Mail message not found or confirmation already received.');
       }
-    };
+    }
+
+    function clickConfirmRegistration() {
+      // Check status if "waiting"
+      const status = localStorage.getItem('confirmation_Status');
+
+      if (status === 'waiting') {
+        // Get the confirmation link from the email
+        const confirmRegistration = mailBox.querySelector('a[href*="confirm"]');
+
+        if (!confirmRegistration) {
+          return;
+        }
+
+        console.log('Confirming the registration.');
+        localStorage.setItem('confirmation_Status', 'expired');
+        setTimeout(() => {
+          confirmRegistration.click();
+        }, 1000);
+      } else {
+        console.log('Confirmation link not found or confirmation already received.');
+      }
+    }
 
     // Set up a mutation observer to watch for new message
     const mailMessageObserver = new MutationObserver(() => clickMailMessage());
