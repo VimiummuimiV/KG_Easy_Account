@@ -4,14 +4,65 @@
 // @version      0.1
 // @description  Fast registration without suffering and timeconsuming
 // @author       Patcher
-// @match        *://klavogonki.ru/register/*
+// @match        *://klavogonki.ru/*
 // @match        *://temp-mail.org/*
 // @grant        none
 // ==/UserScript==
 
 (function () {
 
-  // Function to run code on "klavogonki.ru"
+  // Define the goToTempMail function
+  function goToTempMail() {
+    let startX, startY;
+
+    // Add a mousedown event listener to the window
+    window.addEventListener('mousedown', function (event) {
+      // Store the starting X and Y coordinates of the mouse cursor
+      startX = event.clientX;
+      startY = event.clientY;
+
+      // Add mousemove and mouseup event listeners to the window
+      window.addEventListener('mousemove', checkForDrag);
+      window.addEventListener('mouseup', removeEventListeners);
+    });
+
+    // Define the checkForDrag function, which checks if the mouse cursor has moved more than 10% of the viewport width or height
+    function checkForDrag(event) {
+      const offsetX = Math.abs(event.clientX - startX);
+      const offsetY = Math.abs(event.clientY - startY);
+
+      // If the offset is greater than 30% of the viewport width or height, redirect to temp mail and remove event listeners
+      if (offsetX > (window.innerWidth * 0.3) || offsetY > (window.innerHeight * 0.3)) {
+        window.location.href = "https://temp-mail.org/en/";
+        removeEventListeners();
+      }
+    }
+
+    // Define the removeEventListeners function, which removes the mousemove and mouseup event listeners from the window
+    function removeEventListeners() {
+      window.removeEventListener('mousemove', checkForDrag);
+      window.removeEventListener('mouseup', removeEventListeners);
+    }
+  }
+
+  // Call the goToTempMail function
+  goToTempMail();
+
+  function checkForConfirmationParam() {
+    const gamelistUrl = "https://klavogonki.ru/gamelist";
+    const currentUrl = window.location.href;
+
+    if (currentUrl.includes("confirm")) {
+      console.log("Redirecting to gamelist page...");
+      window.location.href = gamelistUrl;
+    } else {
+      console.log("No confirmation parameter found.");
+    }
+  }
+
+  setTimeout(checkForConfirmationParam, 2000); // Delay execution for 2 seconds (2000 milliseconds)
+
+  // Function to run code on "klavogonki.ru/register"
   function KG_RUNNER() {
 
     // Get references to the form fields
@@ -20,6 +71,113 @@
     const registerConfirmPass = document.querySelector('#register_confirmpass');
     const registerEmail = document.querySelector('#register_email');
     const registerSubmitButton = document.querySelector('#register_submit_button');
+
+    // Function to generate a random nickname
+    function generateNickname() {
+      const consonants = 'bcdfghjklmnpqrstvwxyz';
+      const vowels = 'aeiouy';
+      const currentYear = new Date().getFullYear();
+      const age = Math.floor(Math.random() * (currentYear - 2007 + 1)) + 15;
+      const yearString = age.toString();
+      const yearIncluded = Math.random() < 0.5;
+      const includeUnderline = Math.random() < 0.5;
+
+      let length = Math.floor(Math.random() * 8) + 8;
+      let lastCharIsConsonant = Math.random() < 0.5; // randomize the first character
+
+      let nickname = '';
+
+      for (let i = 0; i < length; i++) {
+        if (lastCharIsConsonant) { // add a vowel
+          const randomIndex = Math.floor(Math.random() * vowels.length);
+          nickname += vowels[randomIndex];
+          lastCharIsConsonant = false;
+        } else { // add a consonant
+          const randomIndex = Math.floor(Math.random() * consonants.length);
+          nickname += consonants[randomIndex];
+          lastCharIsConsonant = true;
+        }
+      }
+
+      // Function to capitalize the first letter of a string and optionally the letter after a specified character
+      function capitalizeLetter(str, char) {
+        const index = str.indexOf(char);
+        if (index !== -1) {
+          const firstPart = str.slice(0, index + 1);
+          const secondPart = str.slice(index + 1);
+          const capitalized = secondPart.charAt(0).toUpperCase() + secondPart.slice(1);
+          return firstPart + capitalized;
+        } else {
+          return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+      }
+
+      // Randomly capitalize the first letter of the beginning of the nickname
+      const capitalizeFirstLetter = Math.random() < 0.5;
+      if (capitalizeFirstLetter) {
+        nickname = capitalizeLetter(nickname);
+      }
+
+      // Randomly add underscore to nickname 
+      // Also randomly capitalize the first letter after the underscore if exist
+      if (includeUnderline) {
+        const middleIndex = Math.floor(nickname.length / 2);
+        nickname = nickname.slice(0, middleIndex) + '_' + nickname.slice(middleIndex);
+        // Randomly capitalize letter after underscore
+        if (Math.random() < 0.5) {
+          nickname = capitalizeLetter(nickname, '_');
+        }
+      }
+
+      // Randomly add year to nickname
+      if (yearIncluded) {
+        if (Math.random() < 0.5) {
+          nickname += yearString;
+        } else {
+          nickname += '_' + yearString;
+        }
+
+        // Check if nickname is longer than 15 characters and contains the year
+        if (nickname.length > 15 && nickname.indexOf(yearString) !== -1) {
+          // Remove characters from end of nickname until it is 15 characters long
+          while (nickname.length > 15) {
+            nickname = nickname.substring(0, nickname.length - 1);
+          }
+        }
+      } else {
+        // Limit the length of the nickname to 15 characters
+        if (nickname.length > 15) {
+          nickname = nickname.substring(0, 15);
+        }
+      }
+
+      return nickname;
+    }
+
+    // Fill nickname in the nickname field
+    function fillNickname() {
+      // Fill the nickname in the nickname field, if nickname field exist
+      if (registerLogin) {
+        // Generate a new nickname
+        const generatedNickname = generateNickname();
+
+        // Fill the nickname field with generated nickname
+        registerLogin.value = generatedNickname;
+      }
+    }
+
+    fillNickname();
+
+    // Check if the nickname field exists before adding event listener
+    if (registerLogin) {
+      // Add double click event listener to the nickname field
+      registerLogin.addEventListener('dblclick', () => {
+        fillNickname(registerLogin);
+        updateRegisterData();
+      });
+    } else {
+      console.log('Nickname field not found!');
+    }
 
     // Define a function to generate a random length password
     function generatePassword() {
@@ -53,11 +211,18 @@
 
     fillPassword();
 
+    // Define an array of objects to attach the event listener to
+    const passwordFields = [registerPass, registerConfirmPass];
+
     // Check if the password fields exist before adding event listeners
-    if (registerPass && registerConfirmPass) {
-      // Add click event listeners to the password fields
-      registerPass.addEventListener('click', fillPassword);
-      registerConfirmPass.addEventListener('click', fillPassword);
+    if (passwordFields.every(field => field)) {
+      // Loop through the password fields and add the event listeners
+      passwordFields.forEach(field => {
+        field.addEventListener('dblclick', () => {
+          fillPassword(field);
+          updateRegisterData();
+        });
+      });
     } else {
       console.log('One or both password fields not found!');
     }
@@ -102,6 +267,7 @@
     observeSubmitButtonState(registerSubmitButton);
 
     function getTempMailAddress() {
+      // Get the email value from the URL parameter
       const urlParams = new URLSearchParams(window.location.search);
       const email = urlParams.get('email');
 
@@ -115,26 +281,17 @@
 
       if (!accountRegisterData) {
         // If the accountRegisterData key doesn't exist in local storage, create it with default values
-        accountRegisterData = ['', '', email];
+        const login = generateNickname();
+        const password = generatePassword();
+        accountRegisterData = [login, password, email];
         localStorage.setItem('accountRegisterData', JSON.stringify(accountRegisterData));
       } else {
         // If the accountRegisterData key exists in local storage, update the email if necessary
-        if (accountRegisterData[2] !== email) {
-          accountRegisterData[1] = registerPass.value; // Backup generated password
-          accountRegisterData[2] = email; // Backup filled email
-          localStorage.setItem('accountRegisterData', JSON.stringify(accountRegisterData));
+        if (accountRegisterData) {
+          // Call the helper function to restore the login and password fields
+          restoreRegistrationFields();
         }
       }
-
-      // Remove the email parameter from the URL
-      urlParams.delete('email');
-      const newUrl = window.location.pathname + '?' + urlParams.toString();
-      window.history.replaceState({}, '', newUrl);
-
-      // Set the email value in the register_email input element
-      const registerEmail = document.querySelector('#register_email');
-      registerEmail.value = email;
-      focusLoginInput();
 
       return email;
     }
@@ -143,19 +300,38 @@
 
     function restoreRegistrationFields() {
       if (registerEmail && !registerEmail.value) {
-        // Get the login and email values from localStorage
+        // Get the login, password and email values from localStorage
         const accountRegisterData = JSON.parse(localStorage.getItem('accountRegisterData'));
         const login = accountRegisterData ? accountRegisterData[0] : '';
         const password = accountRegisterData ? accountRegisterData[1] : '';
         const email = accountRegisterData ? accountRegisterData[2] : '';
 
-        // Fill the login and email fields with the values from localStorage
-        setTimeout(() => {
-          registerLogin.value = login;
-          registerPass.value = registerConfirmPass.value = password;
-          registerEmail.value = email;
-        }, 2000);
+        // Fill the login, password and email fields with the values from localStorage
+        registerLogin.value = login;
+        registerPass.value = registerConfirmPass.value = password;
+        registerEmail.value = email;
       }
+    }
+
+    // Define function what will update localStorage data key "accountRegisterData" with double click events 
+    function updateRegisterData() {
+      // Get the login value from the form field
+      const login = registerLogin.value;
+      // Get the password value from the form field
+      const password = registerPass.value;
+      // Get the email value from the form field
+      const email = registerEmail.value;
+
+      // Get the existing accountRegisterData from localStorage
+      let accountRegisterData = JSON.parse(localStorage.getItem('accountRegisterData')) || ['', '', ''];
+
+      // Update the login and email value in the accountRegisterData array
+      accountRegisterData[0] = login;
+      accountRegisterData[1] = password;
+      accountRegisterData[2] = email;
+
+      // Store the updated account register data array in localStorage
+      localStorage.setItem('accountRegisterData', JSON.stringify(accountRegisterData));
     }
 
     // Save account into "localStorage" key "accountSavedData" if registration succeeds
@@ -318,7 +494,7 @@
               console.log(message);
             }, delay);
           }
-          // Messages to be shown successively 
+          // Messages to be shown successively
           logMessageWithDelay('The current URL contains the "registration" parameter.', 500);
           logMessageWithDelay('Changing status from copied to waiting.', 1000);
           logMessageWithDelay('Waiting for confirmation message.', 1500);
@@ -419,9 +595,11 @@
 
   } // TM_RUNNER_END
 
-  // Run code for klavogonki.ru
-  if ((window.location.protocol + "//" + window.location.host).includes("klavogonki.ru")) {
-    console.log("Running code for klavogonki.ru...");
+  // Run code for klavogonki.ru/register
+  const KG_Register_Page = "klavogonki.ru/register";
+
+  if (window.location.href.includes(KG_Register_Page)) {
+    console.log("Running code for Klavogonki register page...");
     KG_RUNNER();
   }
 
