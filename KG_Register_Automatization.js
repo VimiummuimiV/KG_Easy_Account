@@ -22,7 +22,7 @@
     const registerSubmitButton = document.querySelector('#register_submit_button');
 
     // Define a function to generate a random length password
-    const generatePassword = () => {
+    function generatePassword() {
       const symbols = '0123456789abcdefghijklmnopqrstuvwxyz';
       // Randomize password length
       const length = Math.floor(Math.random() * 11) + 10;
@@ -32,7 +32,7 @@
         password += symbols.charAt(Math.floor(Math.random() * symbols.length));
       }
       return password;
-    };
+    }
 
     // Fill the password in the password fields
     function fillPassword() {
@@ -197,6 +197,8 @@
     function checkRegistrationStatus() {
       // Define the URLs
       const tempMailUrl = 'https://temp-mail.org/en/';
+      const registrationSuccessful = 'registration=successful';
+      const tempMailWithParams = `${tempMailUrl}?${registrationSuccessful}`;
       const registerUrl = 'https://klavogonki.ru/register/';
 
       // Get the main container
@@ -220,7 +222,7 @@
 
         // Redirect to the confirmation page after 1 second
         setInterval(() => {
-          window.location.href = tempMailUrl;
+          window.location.href = tempMailWithParams;
         }, 1000);
       } else {
         // Check for an error message
@@ -302,14 +304,24 @@
     function checkStatusKey() {
       setTimeout(() => {
         const status = localStorage.getItem('confirmation_Status');
+        const searchParams = new URLSearchParams(window.location.search);
         if (status === null) {
           console.log('Assigning proper status data to make observer work properly.');
           localStorage.setItem('confirmation_Status', 'welcome');
         }
         // Redirect to the register URL with the email parameter only
-        else if (status === 'copied') {
+        else if (status === 'copied' && searchParams.has('registration')) {
           localStorage.setItem('confirmation_Status', 'waiting');
-          console.log("Waiting for confirmation message.")
+          // Define function to console log messages with delay
+          function logMessageWithDelay(message, delay) {
+            setTimeout(() => {
+              console.log(message);
+            }, delay);
+          }
+          // Messages to be shown successively 
+          logMessageWithDelay('The current URL contains the "registration" parameter.', 500);
+          logMessageWithDelay('Changing status from copied to waiting.', 1000);
+          logMessageWithDelay('Waiting for confirmation message.', 1500);
         }
         // Delete used email address
         else if (status === 'expired') {
@@ -336,10 +348,15 @@
 
             // Check status if "waiting"
             const status = localStorage.getItem('confirmation_Status');
+            const searchParams = new URLSearchParams(window.location.search);
             // Push to the localStorage data copied if the fresh visit
             if (status === 'welcome') {
               localStorage.setItem('confirmation_Status', 'copied');
               console.log("Grabbed fresh email address. Navigating to registration page.")
+              window.location.href = encodedRegisterUrl;
+            }
+            else if (status === 'copied' && !searchParams.has('registration')) {
+              console.log("Email not used yet. Trying current email again.");
               window.location.href = encodedRegisterUrl;
             }
           }
