@@ -115,12 +115,13 @@
 
       if (!accountRegisterData) {
         // If the accountRegisterData key doesn't exist in local storage, create it with default values
-        accountRegisterData = ['', email];
+        accountRegisterData = ['', '', email];
         localStorage.setItem('accountRegisterData', JSON.stringify(accountRegisterData));
       } else {
         // If the accountRegisterData key exists in local storage, update the email if necessary
-        if (accountRegisterData[1] !== email) {
-          accountRegisterData[1] = email;
+        if (accountRegisterData[2] !== email) {
+          accountRegisterData[1] = registerPass.value; // Backup generated password
+          accountRegisterData[2] = email; // Backup filled email
           localStorage.setItem('accountRegisterData', JSON.stringify(accountRegisterData));
         }
       }
@@ -145,23 +146,25 @@
         // Get the login and email values from localStorage
         const accountRegisterData = JSON.parse(localStorage.getItem('accountRegisterData'));
         const login = accountRegisterData ? accountRegisterData[0] : '';
-        const email = accountRegisterData ? accountRegisterData[1] : '';
+        const password = accountRegisterData ? accountRegisterData[1] : '';
+        const email = accountRegisterData ? accountRegisterData[2] : '';
 
         // Fill the login and email fields with the values from localStorage
         setTimeout(() => {
           registerLogin.value = login;
+          registerPass.value = registerConfirmPass.value = password;
           registerEmail.value = email;
         }, 2000);
       }
     }
 
-    // Save account into "localStorage" key "accountSavedData" if registration succeed
+    // Save account into "localStorage" key "accountSavedData" if registration succeeds
     function saveAccount() {
       // Get accountRegisterData from localStorage
       const accountRegisterData = JSON.parse(localStorage.getItem('accountRegisterData'));
 
       // Get accountSavedData from localStorage
-      const accountSavedData = JSON.parse(localStorage.getItem('accountSavedData'));
+      let accountSavedData = JSON.parse(localStorage.getItem('accountSavedData'));
 
       // Check if the accountRegisterData already exists in the accountSavedData array
       const existsInSavedData = accountSavedData && // Check that accountSavedData is truthy
@@ -176,19 +179,18 @@
 
       // If the accountRegisterData doesn't already exist in the accountSavedData array, add it to the array
       if (!existsInSavedData) {
-        let newSavedData;
+        const newSavedData = [accountRegisterData[0], accountRegisterData[1]];
 
-        // If accountSavedData is not an array, create a new array with accountRegisterData as the first element
+        // If accountSavedData is not an array, create a new array with newSavedData as the first element
         if (!Array.isArray(accountSavedData)) {
-          newSavedData = [accountRegisterData];
+          accountSavedData = [newSavedData];
         } else {
-          // If accountSavedData is an array, push accountRegisterData to the end of the array
-          accountSavedData.push(accountRegisterData);
-          newSavedData = accountSavedData;
+          // If accountSavedData is an array, push newSavedData to the end of the array
+          accountSavedData.push(newSavedData);
         }
 
         // Store the new accountSavedData in localStorage
-        localStorage.setItem('accountSavedData', JSON.stringify(newSavedData));
+        localStorage.setItem('accountSavedData', JSON.stringify(accountSavedData));
       }
     }
 
@@ -246,15 +248,18 @@
     registerLogin.addEventListener('keyup', () => {
       // Get the login value from the form field
       const login = registerLogin.value;
+      // Get the password value from the form field
+      const password = registerPass.value;
       // Get the email value from the form field
       const email = registerEmail.value;
 
       // Get the existing accountRegisterData from localStorage
-      let accountRegisterData = JSON.parse(localStorage.getItem('accountRegisterData')) || ['', ''];
+      let accountRegisterData = JSON.parse(localStorage.getItem('accountRegisterData')) || ['', '', ''];
 
       // Update the login and email value in the accountRegisterData array
       accountRegisterData[0] = login;
-      accountRegisterData[1] = email;
+      accountRegisterData[1] = password;
+      accountRegisterData[2] = email;
 
       // Store the updated account register data array in localStorage
       localStorage.setItem('accountRegisterData', JSON.stringify(accountRegisterData));
