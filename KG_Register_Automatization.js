@@ -268,12 +268,22 @@
     const mailBox = document.querySelector('.inboxWarpMain');
     const emailInput = document.querySelector('#mail');
     const deleteButton = document.querySelector('#click-to-delete');
+    const refreshButton = document.querySelector('#click-to-refresh');
     const registerUrlDomain = 'https://klavogonki.ru/register/';
 
     // Add a click event listener to the delete button
     deleteButton.addEventListener('click', function () {
       localStorage.setItem('confirmation_Status', 'welcome');
       console.log('Email address deleted by user.');
+    });
+
+    // Actualize status by clicking refresh button if the "KG" refused temp mail
+    refreshButton.addEventListener('click', () => {
+      const isWaitingStatus = localStorage.getItem("confirmation_Status") === "waiting";
+      if (isWaitingStatus) {
+        localStorage.setItem('confirmation_Status', 'welcome');
+        location.reload();
+      }
     });
 
     // Define function to delete email address by script logic
@@ -317,6 +327,8 @@
             let tempMailAddress = emailInput.value;
             let encodedTempMail = encodeURIComponent(tempMailAddress);
             let encodedRegisterUrl = registerUrlDomain + '?email=' + encodedTempMail;
+            // Storing email address into localStorage to check if matching or not 
+
             // Check status if "waiting"
             const status = localStorage.getItem('confirmation_Status');
             // Push to the localStorage data copied if the fresh visit
