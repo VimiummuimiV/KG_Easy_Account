@@ -11,59 +11,62 @@
 
 (function () {
 
-  // Define the goToTempMail function
-  function goToTempMail() {
-    let startX, startY;
+  // Run only on klavogonki globally
+  if ((window.location.protocol + "//" + window.location.host).includes("klavogonki.ru")) {
+    // Define the goToTempMail
+    function goToTempMail() {
+      let startX, startY;
 
-    // Add a mousedown event listener to the window
-    window.addEventListener('mousedown', function (event) {
-      // Check if the left mouse button was pressed
-      if (event.button === 0) {
-        // Store the starting X and Y coordinates of the mouse cursor
-        startX = event.clientX;
-        startY = event.clientY;
+      // Add a mousedown event listener to the window
+      window.addEventListener('mousedown', function (event) {
+        // Check if the left mouse button was pressed
+        if (event.button === 0) {
+          // Store the starting X and Y coordinates of the mouse cursor
+          startX = event.clientX;
+          startY = event.clientY;
 
-        // Add mousemove and mouseup event listeners to the window
-        window.addEventListener('mousemove', checkForDrag);
-        window.addEventListener('mouseup', removeEventListeners);
+          // Add mousemove and mouseup event listeners to the window
+          window.addEventListener('mousemove', checkForDrag);
+          window.addEventListener('mouseup', removeEventListeners);
+        }
+      });
+
+      // Define the checkForDrag function, which checks if the mouse cursor has moved more than 10% of the viewport width or height
+      function checkForDrag(event) {
+        const offsetX = Math.abs(event.clientX - startX);
+        const offsetY = Math.abs(event.clientY - startY);
+
+        // If the offset is greater than 30% of the viewport width or height, redirect to temp mail and remove event listeners
+        if (offsetX > (window.innerWidth * 0.3) || offsetY > (window.innerHeight * 0.3)) {
+          window.location.href = "https://temp-mail.org/en/";
+          removeEventListeners();
+        }
       }
-    });
 
-    // Define the checkForDrag function, which checks if the mouse cursor has moved more than 10% of the viewport width or height
-    function checkForDrag(event) {
-      const offsetX = Math.abs(event.clientX - startX);
-      const offsetY = Math.abs(event.clientY - startY);
-
-      // If the offset is greater than 30% of the viewport width or height, redirect to temp mail and remove event listeners
-      if (offsetX > (window.innerWidth * 0.3) || offsetY > (window.innerHeight * 0.3)) {
-        window.location.href = "https://temp-mail.org/en/";
-        removeEventListeners();
+      // Define the removeEventListeners function, which removes the mousemove and mouseup event listeners from the window
+      function removeEventListeners() {
+        window.removeEventListener('mousemove', checkForDrag);
+        window.removeEventListener('mouseup', removeEventListeners);
       }
     }
 
-    // Define the removeEventListeners function, which removes the mousemove and mouseup event listeners from the window
-    function removeEventListeners() {
-      window.removeEventListener('mousemove', checkForDrag);
-      window.removeEventListener('mouseup', removeEventListeners);
+    // Call the goToTempMail function
+    goToTempMail();
+
+    function checkForConfirmationParam() {
+      const gamelistUrl = "https://klavogonki.ru/gamelist";
+      const currentUrl = window.location.href;
+
+      if (currentUrl.includes("confirm")) {
+        console.log("Redirecting to gamelist page...");
+        window.location.href = gamelistUrl;
+      } else {
+        console.log("No confirmation parameter found.");
+      }
     }
+
+    setTimeout(checkForConfirmationParam, 2000); // Delay execution for 2 seconds (2000 milliseconds)
   }
-
-  // Call the goToTempMail function
-  goToTempMail();
-
-  function checkForConfirmationParam() {
-    const gamelistUrl = "https://klavogonki.ru/gamelist";
-    const currentUrl = window.location.href;
-
-    if (currentUrl.includes("confirm")) {
-      console.log("Redirecting to gamelist page...");
-      window.location.href = gamelistUrl;
-    } else {
-      console.log("No confirmation parameter found.");
-    }
-  }
-
-  setTimeout(checkForConfirmationParam, 2000); // Delay execution for 2 seconds (2000 milliseconds)
 
   // Function to run code on "klavogonki.ru/register"
   function KG_RUNNER() {
