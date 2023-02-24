@@ -269,7 +269,7 @@
     // Define a function to check the reCAPTCHA response
     function checkRecaptchaResponse() {
       // Get the reCAPTCHA response
-      var response = grecaptcha.getResponse();
+      let response = grecaptcha.getResponse();
 
       // If the response length is greater than 0, reCAPTCHA is verified
       if (response.length > 0) {
@@ -284,7 +284,7 @@
     }
 
     // Set an interval to check the reCAPTCHA response every 1 second
-    var checkInterval = setInterval(checkRecaptchaResponse, 1000);
+    let checkInterval = setInterval(checkRecaptchaResponse, 1000);
 
     function getTempMailAddress() {
       // Get the email value from the URL parameter
