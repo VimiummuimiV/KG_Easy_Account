@@ -17,13 +17,16 @@
 
     // Add a mousedown event listener to the window
     window.addEventListener('mousedown', function (event) {
-      // Store the starting X and Y coordinates of the mouse cursor
-      startX = event.clientX;
-      startY = event.clientY;
+      // Check if the left mouse button was pressed
+      if (event.button === 0) {
+        // Store the starting X and Y coordinates of the mouse cursor
+        startX = event.clientX;
+        startY = event.clientY;
 
-      // Add mousemove and mouseup event listeners to the window
-      window.addEventListener('mousemove', checkForDrag);
-      window.addEventListener('mouseup', removeEventListeners);
+        // Add mousemove and mouseup event listeners to the window
+        window.addEventListener('mousemove', checkForDrag);
+        window.addEventListener('mouseup', removeEventListeners);
+      }
     });
 
     // Define the checkForDrag function, which checks if the mouse cursor has moved more than 10% of the viewport width or height
