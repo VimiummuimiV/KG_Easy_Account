@@ -121,13 +121,12 @@
   .userAccount:hover {
     background-color: #616161;
     cursor: pointer;
-  } 
+  }
 
 `;
 
   const head = document.head || document.getElementsByTagName('head')[0];
   const style = document.createElement('style');
-  style.type = 'text/css';
   style.appendChild(document.createTextNode(css));
   head.appendChild(style);
 
