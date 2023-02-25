@@ -9,7 +9,7 @@
 // ==/UserScript==
 
 (function () {
-
+  // BUTTONS AND EVENTS
   // Get account data from local storage, or an empty array if none exists
   const accountSavedData = JSON.parse(localStorage.getItem('accountSavedData')) || [];
 
@@ -17,30 +17,131 @@
   const accountsContainer = document.createElement('div');
   accountsContainer.classList.add('accounts');
 
-  // Create a button for each account and append it to the container
+  // Loop through each account and create a button for it
   accountSavedData.forEach(account => {
     const [login, password] = account;
+
+    // Create a button element and set its properties
     const button = document.createElement('button');
     button.classList.add('userAccount');
     button.textContent = login;
-    button.dataset.account = JSON.stringify({ login, password });
+    button.dataset.login = login;
+    button.dataset.password = password;
+
+    // Append the button to the container
     accountsContainer.appendChild(button);
   });
 
-  // Add the container to the page
+  // Append the container to the page
   document.body.appendChild(accountsContainer);
 
   // Function to handle button click
   async function handleButtonClick(event) {
-    const { login, password } = JSON.parse(event.target.dataset.account);
-    await logout(); // logout before logging in with a new account
-    await loginIntoAccount(login, password);
+    // Get the login and password from the button's data attributes
+    const login = event.target.dataset.login;
+    const password = event.target.dataset.password;
+
+    // Logout before logging in with a new account, unless the Ctrl key is pressed
+    if (!event.ctrlKey) {
+      // Set the active class on the clicked button
+      setActiveButton(login);
+      await logout();
+      await loginIntoAccount(login, password);
+    }
+
+    // Copy the password to the clipboard if the Ctrl key is pressed
+    if (event.ctrlKey) {
+      navigator.clipboard.writeText(password);
+      showCopiedPassword(event);
+    }
   }
 
-  // Add event listener to all buttons with class 'user'
-  const userButtons = document.querySelectorAll('.userAccount');
-  userButtons.forEach(button => button.addEventListener('click', handleButtonClick));
+  // Add event listener to all buttons with class 'userAccount'
+  document.querySelectorAll('.userAccount').forEach(button => button.addEventListener('click', handleButtonClick));
 
+  // Reference for the existing popup
+  let previousPopup = null;
+
+  function showCopiedPassword(event) {
+    // Create a new div element for the password popup
+    const passwordPopup = document.createElement('div');
+    passwordPopup.classList.add('passwordPopup');
+    passwordPopup.innerText = `Password copied: ${event.target.dataset.password} From user: ${event.target.dataset.login}`;
+
+    // Set the initial styles for the password popup
+    passwordPopup.style.position = 'fixed';
+    passwordPopup.style.right = '-100%';
+    passwordPopup.style.transform = 'translateY(-50%)';
+    passwordPopup.style.opacity = '0';
+    passwordPopup.style.color = '#dadada';
+    passwordPopup.style.backgroundColor = '#1b1b1b';
+    passwordPopup.style.padding = '8px 16px';
+    passwordPopup.style.display = 'flex';
+    passwordPopup.style.alignItems = 'center';
+
+    // Append the password popup to the body
+    document.body.appendChild(passwordPopup);
+
+    // Calculate the width and height of the password popup
+    const popupWidth = passwordPopup.offsetWidth;
+    const popupHeight = passwordPopup.offsetHeight;
+    const verticalOffset = 2;
+
+    // Set the position of the password popup relative to the previous popup
+    let topPosition = '30vh';
+    if (previousPopup !== null) {
+      const previousPopupPosition = previousPopup.getBoundingClientRect();
+      topPosition = `calc(${previousPopupPosition.bottom}px + ${popupHeight}px / 2 + ${verticalOffset}px)`;
+    }
+    passwordPopup.style.top = topPosition;
+    passwordPopup.style.right = `-${popupWidth}px`;
+
+    // Animate the password popup onto the screen
+    passwordPopup.style.transition = 'all 0.3s ease-in-out';
+    passwordPopup.style.right = '0';
+    passwordPopup.style.opacity = '1';
+
+    // Store a reference to the current popup
+    previousPopup = passwordPopup;
+
+    // Hide the password popup after a short delay
+    setTimeout(() => {
+      passwordPopup.style.transition = 'all 0.3s ease-in-out';
+      passwordPopup.style.right = `-${popupWidth}px`;
+      passwordPopup.style.opacity = '0';
+      setTimeout(() => {
+        document.body.removeChild(passwordPopup);
+        // Clear the reference to the previous popup
+        if (previousPopup === passwordPopup) {
+          previousPopup = null;
+        }
+      }, 300);
+    }, 5000);
+  }
+
+  // Function to set the active button
+  function setActiveButton(login) {
+    // Set the active button in local storage
+    localStorage.setItem('activeAccount', login);
+
+    // Set the active class on the clicked button
+    document.querySelectorAll('.userAccount').forEach(button => {
+      if (button.dataset.login === login) {
+        button.classList.add('active');
+      } else {
+        button.classList.remove('active');
+      }
+    });
+  }
+
+  // Set the active class on the stored active button, if it exists
+  const activeButton = localStorage.getItem('activeAccount');
+  if (activeButton) {
+    setActiveButton(activeButton);
+  }
+
+
+  // REQUESTING
   // URL for the login page
   const loginUrl = 'https://klavogonki.ru/login';
 
@@ -96,21 +197,24 @@
     }
   }
 
-  // CSS styles
+
+  // CSS STYLES
   const css = `
   .accounts {
     display: flex;
     flex-direction: column;
+    max-width: 120px;
     position: fixed;
-    top: 45px;
-    left: 0px;
+    top: 50%;
+    transform: translateY(-50%);
   }
 
   .userAccount {
+    position: relative;
     min-width: 80px;
     max-width: 120px;
     background-color: #424242;
-    color: #fff;
+    color: white;
     border: none;
     padding: 8px 8px;
     font-size: 10px;
@@ -121,6 +225,32 @@
   .userAccount:hover {
     background-color: #616161;
     cursor: pointer;
+  }
+
+  .userAccount::after {
+    content: attr(data-password);
+    pointer-events: none;
+    min-width: 80px;
+    max-width: 120px;
+    position: absolute;
+    top: 0;
+    right: 2px;
+    background-color: #838383;
+    color: white;
+    padding: 8px 8px;
+    font-size: 10px;
+    font-weight: 500;
+    z-index: -1;
+    transform: translateX(0%);
+    transition: transform 0.1s ease-out;
+  }
+
+  .userAccount:hover::after {
+    transform: translateX(100%);
+  }
+
+  .userAccount.active {
+    background-color: #616161;
   }
 
 `;
