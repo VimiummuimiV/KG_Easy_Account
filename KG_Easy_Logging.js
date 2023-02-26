@@ -215,6 +215,7 @@
     max-width: 120px;
     position: fixed;
     top: 50%;
+    left: 0;
     transform: translateY(-50%);
   }
 
@@ -229,11 +230,13 @@
     font-size: 10px;
     font-weight: 500;
     transition: background-color 0.2s ease;
+    overflow: hidden;
   }
 
   .userAccount:hover {
-    background-color: #616161;
+    background-color: #565656;
     cursor: pointer;
+    overflow: visible;
   }
 
   .userAccount::after {
