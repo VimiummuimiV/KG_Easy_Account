@@ -59,6 +59,14 @@
   // Add event listener to all buttons with class 'userAccount'
   document.querySelectorAll('.userAccount').forEach(button => button.addEventListener('click', handleButtonClick));
 
+  function randomHSLColor() {
+    var hue = Math.floor(Math.random() * 360);
+    var saturation = 20;
+    var lightness = 15;
+    var color = "hsl(" + hue + "," + saturation + "%," + lightness + "%)";
+    return color;
+  }
+
   // Reference for the existing popup
   let previousPopup = null;
 
@@ -74,7 +82,8 @@
     passwordPopup.style.transform = 'translateY(-50%)';
     passwordPopup.style.opacity = '0';
     passwordPopup.style.color = '#dadada';
-    passwordPopup.style.backgroundColor = '#1b1b1b';
+    passwordPopup.style.backgroundColor = randomHSLColor();
+    passwordPopup.style.setProperty('border-radius', '4px 0 0 4px', 'important');
     passwordPopup.style.padding = '8px 16px';
     passwordPopup.style.display = 'flex';
     passwordPopup.style.alignItems = 'center';
