@@ -53,11 +53,27 @@
     // Call the goToTempMail function
     goToTempMail();
 
+    function addProfileID() {
+      const regex = /profile\/(\d+)/;
+      const match = window.location.href.match(regex);
+      if (match) {
+        const [, profileID] = match;
+        const accountData = JSON.parse(localStorage.getItem('accountSavedData'));
+        const latestAccount = accountData[accountData.length - 1];
+        latestAccount.push(profileID);
+        localStorage.setItem('accountSavedData', JSON.stringify(accountData));
+        return profileID;
+      }
+      return null;
+    }
+
     function checkForConfirmationParam() {
       const gamelistUrl = "https://klavogonki.ru/gamelist";
       const currentUrl = window.location.href;
 
       if (currentUrl.includes("confirm")) {
+        console.log("Adding profile ID to the new registered accounts data.")
+        addProfileID();
         console.log("Redirecting to gamelist page...");
         window.location.href = gamelistUrl;
       } else {
