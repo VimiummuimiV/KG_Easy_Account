@@ -35,8 +35,12 @@
     // Get an array of profile IDs from saved data
     const ids = getProfilesID();
 
+    // Set the current profile index to 0 in localStorage
+    localStorage.setItem('currentProfileIndex', 0);
+
     // Set the path for the profile page
     const profilePath = 'https://klavogonki.ru/u/#/';
+    const gamelistPage = 'https://klavogonki.ru/gamelist/';
 
     // Get the current profile index from localStorage, defaulting to 0 if it's not set
     let currentProfileIndex = parseInt(localStorage.getItem('currentProfileIndex')) || 0;
@@ -57,6 +61,12 @@
         // Update the checkForProfiles flag in localStorage if this is the last profile
         if (i === ids.length - 1) {
           localStorage.setItem('checkForProfiles', false);
+          setTimeout(() => {
+            // Remove unnecesary localStorage key "currentProfileIndex"
+            localStorage.removeItem('currentProfileIndex');
+            // Navigate back to chat 
+            window.location.href = gamelistPage;
+          }, 2000);
         }
       }, 1000 * (i - currentProfileIndex));
     }
@@ -66,8 +76,6 @@
   function validateProfiles() {
     // Set the flag to continue checking in localStorage
     localStorage.setItem('checkForProfiles', true);
-    // Set the current profile index to 0 in localStorage
-    localStorage.setItem('currentProfileIndex', 0);
 
     // Call the navigateToProfiles function to start checking
     navigateToProfiles();
@@ -155,14 +163,17 @@
   // Add event listener to all buttons with class 'userAccount'
   document.querySelectorAll('.userAccount').forEach(button => button.addEventListener('click', handleButtonClick));
 
-  function randomHSLColor() {
+  // Define the function to randomize te color with exposed lightness parameter
+  function randomHSLColor(lightness) {
+    // Set default value for lightness
+    if (typeof lightness === 'undefined') {
+      lightness = 15;
+    }
     var hue = Math.floor(Math.random() * 360);
     var saturation = 20;
-    var lightness = 15;
-    var color = "hsl(" + hue + "," + saturation + "%," + lightness + "%)";
+    var color = `hsl(${hue},${saturation}%,${lightness}%)`;
     return color;
   }
-
 
   // POPUPS
   // Reference for the existing popup
@@ -176,12 +187,13 @@
 
     // Set the initial styles for the password popup
     passwordPopup.style.position = 'fixed';
-    passwordPopup.style.right = '-100%';
+    passwordPopup.style.left = '-100%';
     passwordPopup.style.transform = 'translateY(-50%)';
     passwordPopup.style.opacity = '0';
     passwordPopup.style.color = '#dadada';
-    passwordPopup.style.backgroundColor = randomHSLColor();
-    passwordPopup.style.setProperty('border-radius', '4px 0 0 4px', 'important');
+    passwordPopup.style.backgroundColor = randomHSLColor(15); // lightness 15% 
+    passwordPopup.style.border = `1px solid ${randomHSLColor(35)}`; // lightness 35%
+    passwordPopup.style.setProperty('border-radius', '0 4px 4px 0', 'important');
     passwordPopup.style.padding = '8px 16px';
     passwordPopup.style.display = 'flex';
     passwordPopup.style.alignItems = 'center';
@@ -201,11 +213,11 @@
       topPosition = `calc(${previousPopupPosition.bottom}px + ${popupHeight}px / 2 + ${verticalOffset}px)`;
     }
     passwordPopup.style.top = topPosition;
-    passwordPopup.style.right = `-${popupWidth}px`;
+    passwordPopup.style.left = `-${popupWidth}px`;
 
     // Animate the password popup onto the screen
     passwordPopup.style.transition = 'all 0.3s ease-in-out';
-    passwordPopup.style.right = '0';
+    passwordPopup.style.left = '0';
     passwordPopup.style.opacity = '1';
 
     // Store a reference to the current popup
@@ -214,7 +226,7 @@
     // Hide the password popup after a short delay
     setTimeout(() => {
       passwordPopup.style.transition = 'all 0.3s ease-in-out';
-      passwordPopup.style.right = `-${popupWidth}px`;
+      passwordPopup.style.left = `-${popupWidth}px`;
       passwordPopup.style.opacity = '0';
       setTimeout(() => {
         document.body.removeChild(passwordPopup);
@@ -354,7 +366,6 @@
     content: attr(data-password);
     pointer-events: none;
     min-width: 80px;
-    max-width: 120px;
     position: absolute;
     top: 0;
     right: 2px;
