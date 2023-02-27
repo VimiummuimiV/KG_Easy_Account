@@ -19,7 +19,7 @@
 
   // Loop through each account and create a button for it
   accountSavedData.forEach(account => {
-    const [login, password] = account;
+    const [login, password, id] = account;
 
     // Create a button element and set its properties
     const button = document.createElement('button');
@@ -27,6 +27,7 @@
     button.textContent = login;
     button.dataset.login = login;
     button.dataset.password = password;
+    button.dataset.id = id;
 
     // Append the button to the container
     accountsContainer.appendChild(button);
@@ -41,19 +42,28 @@
     const login = event.target.dataset.login;
     const password = event.target.dataset.password;
 
-    // Logout before logging in with a new account, unless the Ctrl key is pressed
-    if (!event.ctrlKey) {
-      // Set the active class on the clicked button
+    if (event.ctrlKey) {
+      // Ctrl key is pressed
+      // Copy password to the clipboard
+      navigator.clipboard.writeText(password);
+      showCopiedPassword(event);
+    } else if (event.shiftKey) {
+      // Shift key is pressed
       setActiveButton(login);
       await logout();
       await loginIntoAccount(login, password);
+      const id = event.target.dataset.id;
+      // Navigate to the Logged Profile
+      window.location.assign(`https://klavogonki.ru/u/#/${id}/`);
+    } else {
+      // Neither Ctrl nor Shift key is pressed
+      setActiveButton(login);
+      await logout();
+      await loginIntoAccount(login, password);
+      // Simply reload the page
+      window.location.reload();
     }
 
-    // Copy the password to the clipboard if the Ctrl key is pressed
-    if (event.ctrlKey) {
-      navigator.clipboard.writeText(password);
-      showCopiedPassword(event);
-    }
   }
 
   // Add event listener to all buttons with class 'userAccount'
@@ -171,7 +181,7 @@
           login: login,
           pass: password,
           submit_login: 'Войти',
-          redirect: '/',
+          // redirect: '/',
           'X-XSRF-TOKEN': xsrfToken,
         }).toString(),
         credentials: 'include',
@@ -179,7 +189,6 @@
 
       if (response.ok) {
         console.log('Login successful');
-        window.location.reload(); // Reload the page after successful login
       } else {
         console.error(`Login failed with status ${response.status}`);
       }
