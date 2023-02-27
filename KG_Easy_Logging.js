@@ -9,6 +9,81 @@
 // ==/UserScript==
 
 (function () {
+  // VALIDATION PROCESS
+  // Helper function to extract profile IDs from saved data
+  function getProfilesID() {
+    // Get saved data from local storage
+    const data = JSON.parse(localStorage.getItem('accountSavedData'));
+
+    // Create an array to store profile IDs
+    const ids = [];
+
+    // Loop through each saved account and extract its ID
+    data.forEach(item => {
+      item.forEach(value => {
+        if (typeof value === 'string' && !isNaN(value)) {
+          ids.push(Number(value));
+        }
+      });
+    });
+
+    // Return the array of profile IDs
+    return ids;
+  }
+
+  function navigateToProfiles() {
+    // Get an array of profile IDs from saved data
+    const ids = getProfilesID();
+
+    // Set the path for the profile page
+    const profilePath = 'https://klavogonki.ru/u/#/';
+
+    // Get the current profile index from localStorage, defaulting to 0 if it's not set
+    let currentProfileIndex = parseInt(localStorage.getItem('currentProfileIndex')) || 0;
+
+    // Get the flag to continue checking from localStorage, defaulting to false if it's not set
+    let checkForProfiles = localStorage.getItem('checkForProfiles') === 'true';
+
+    // Loop through each ID from the current index and navigate to its profile page
+    for (let i = currentProfileIndex; i < ids.length && checkForProfiles; i++) {
+      // Construct the URL for the profile page
+      const url = `${profilePath}${ids[i]}`;
+
+      // Set a timeout to navigate to the profile page
+      setTimeout(() => {
+        window.location.assign(url);
+        // Update the current profile index in localStorage
+        localStorage.setItem('currentProfileIndex', i + 1);
+        // Update the checkForProfiles flag in localStorage if this is the last profile
+        if (i === ids.length - 1) {
+          localStorage.setItem('checkForProfiles', false);
+        }
+      }, 1000 * (i - currentProfileIndex));
+    }
+  }
+
+  // Function what will trigger the checking profiles process
+  function validateProfiles() {
+    // Set the flag to continue checking in localStorage
+    localStorage.setItem('checkForProfiles', true);
+    // Set the current profile index to 0 in localStorage
+    localStorage.setItem('currentProfileIndex', 0);
+
+    // Call the navigateToProfiles function to start checking
+    navigateToProfiles();
+  }
+
+  // Function what will trigger validation again after first trigger made by user button click
+  function continiueValidation() {
+    const profilePath = 'https://klavogonki.ru/u/#/';
+    // Check if the current page URL matches the profile page URL pattern
+    // If the flag is true it will start checking if false will do nothing
+    if (window.location.href.startsWith(profilePath)) {
+      navigateToProfiles();
+    }
+  } continiueValidation();
+
+
   // BUTTONS AND EVENTS
   // Get account data from local storage, or an empty array if none exists
   const accountSavedData = JSON.parse(localStorage.getItem('accountSavedData')) || [];
@@ -16,6 +91,17 @@
   // Create a container element for the account buttons
   const accountsContainer = document.createElement('div');
   accountsContainer.classList.add('accounts');
+
+  // Create a button for validating profiles
+  const validateButton = document.createElement('button');
+  validateButton.classList.add('validate-profiles');
+  validateButton.textContent = 'validate';
+
+  // Attach the navigateToProfiles function to the click event of the validateButton
+  validateButton.addEventListener('click', validateProfiles);
+
+  // Append the validate button to the container
+  accountsContainer.appendChild(validateButton);
 
   // Loop through each account and create a button for it
   accountSavedData.forEach(account => {
@@ -77,6 +163,8 @@
     return color;
   }
 
+
+  // POPUPS
   // Reference for the existing popup
   let previousPopup = null;
 
@@ -228,17 +316,31 @@
     transform: translateY(-50%);
   }
 
-  .userAccount {
+  .validate-profiles, .userAccount {
     position: relative;
     min-width: 80px;
     max-width: 120px;
-    background-color: #424242;
-    color: white;
-    border: none;
     padding: 8px 8px;
     font-size: 10px;
     font-weight: 500;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
+  }
+
+  .validate-profiles {
+    color: #83cf40;
+    background-color: #2b4317;
+    border: 1px solid #4b7328;
+    filter: none;
+  }
+
+  .validate-profiles:hover {
+    filter: brightness(1.2);
+  }
+
+  .userAccount {
+    color: #d9d9d9;
+    background-color: #424242;
+    border: none;
     overflow: hidden;
   }
 
