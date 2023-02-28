@@ -10,6 +10,67 @@
 
 (function () {
   // VALIDATION PROCESS
+  function checkAccountAccessibility() {
+    // Access the data in localStorage
+    const accountSavedData = JSON.parse(localStorage.getItem('accountSavedData'));
+    // Extract the current profile ID from window.location.href using a regular expression
+    const currentProfileID = parseInt(window.location.href.match(/\/(\d+)\//)?.[1], 10);
+    // Retrieve the blocked accounts ID array from localStorage, or create a new array if it doesn't exist
+    const blockedAccountsID = JSON.parse(localStorage.getItem('blockedAccountsID')) || [];
+
+    // Store references to make sure elements exist with meaning the profile is blocked
+    const hiddenProfile = document.querySelector('.profile-hidden');
+    const iconBlocked = document.querySelector('.icon-blocked');
+    // Profile path without ID
+    const profilePath = 'https://klavogonki.ru/u/#/';
+
+    // Loop through the saved account data to check for matches and blocked accounts
+    if (Array.isArray(accountSavedData)) {
+      accountSavedData.forEach(subArray => {
+        const profileID = parseInt(subArray[2], 10);
+        // Check if the saved profile ID matches the current profile ID
+        if (profileID === currentProfileID) {
+          console.log(`Match found for profile ID ${currentProfileID} and saved profile ID ${profileID}`);
+          // Check if the profile is blocked
+          const isBlocked = hiddenProfile && iconBlocked && iconBlocked.parentNode === hiddenProfile;
+          if (isBlocked) {
+            console.log(`Profile ID ${profileID} is blocked.`);
+            // Add the matching profile ID to the blockedAccountsID array in localStorage
+            blockedAccountsID.push(profileID);
+            localStorage.setItem('blockedAccountsID', JSON.stringify(blockedAccountsID));
+          }
+        }
+      });
+    }
+  }
+
+  // Helper function to easily clean "accountSavedData" KEY subArrayS with login, pass, id
+  // If the ID [, , profileID] from each subArray matching the ID from "blockedAccountsID" localStorage KEY Array
+  function cleanSavedAccounts() {
+    const accountSavedData = JSON.parse(localStorage.getItem('accountSavedData'));
+    const blockedAccountsID = JSON.parse(localStorage.getItem('blockedAccountsID')) || [];
+
+    // Extract profile IDs from accountSavedData
+    const profileIDs = accountSavedData.map(subArray => parseInt(subArray[2], 10));
+
+    if (profileIDs.length === blockedAccountsID.length && profileIDs.every(id => blockedAccountsID.includes(id))) {
+      // Full match, remove keys
+      console.log('All accounts are blocked. Removing all saved account data.');
+      localStorage.removeItem('accountSavedData');
+      localStorage.removeItem('blockedAccountsID');
+      localStorage.removeItem('activeAccount');
+    } else {
+      // Partial match, filter accountSavedData
+      const filteredData = accountSavedData.filter(subArray => {
+        const profileID = parseInt(subArray[2], 10);
+        return !blockedAccountsID.includes(profileID);
+      });
+      console.log(`Updating "accountSavedData" with filtered data. Original length: ${accountSavedData.length}. Filtered length: ${filteredData.length}`);
+      localStorage.setItem('accountSavedData', JSON.stringify(filteredData));
+      localStorage.removeItem('blockedAccountsID');
+    }
+  }
+
   // Helper function to extract profile IDs from saved data
   function getProfilesID() {
     // Get saved data from local storage
@@ -55,18 +116,26 @@
 
       // Set a timeout to navigate to the profile page
       setTimeout(() => {
+        // Store the current profile id inside "blockedAccountsID" key into localStorage if profile is banned
+        checkAccountAccessibility();
+        // Navigate to next profile for checking profile accessibility
         window.location.assign(url);
         // Update the current profile index in localStorage
         localStorage.setItem('currentProfileIndex', i + 1);
         // Update the checkForProfiles flag in localStorage if this is the last profile
         if (i === ids.length - 1) {
+          // Close checking latest profile for ban
+          checkAccountAccessibility();
+          // Disconnect profile checker from the future calls with global call function
           localStorage.setItem('checkForProfiles', false);
           setTimeout(() => {
-            // Remove unnecesary localStorage key "currentProfileIndex"
+            // Remove unnecessary localStorage key "currentProfileIndex"
             localStorage.removeItem('currentProfileIndex');
+            // Remove all profile data if full match. Remove partially if not all are blocked.
+            cleanSavedAccounts();
             // Navigate back to chat 
             window.location.href = gamelistPage;
-          }, 2000);
+          }, 1000);
         }
       }, 1000 * (i - currentProfileIndex));
     }
@@ -74,6 +143,30 @@
 
   // Function what will trigger the checking profiles process
   function validateProfiles() {
+    // Access the data in localStorage for "accountSavedData" KEY to check if exist
+    const accountSavedData = JSON.parse(localStorage.getItem('accountSavedData'));
+    const validateButton = document.querySelector('.validate-profiles');
+    const filterSpeed = 1; // seconds
+
+    if (!accountSavedData) {
+      console.log('No saved account data found.');
+
+      // Add class to start animation
+      validateButton.classList.add('filter-unaccessible');
+
+      // Add event listener for animationend
+      validateButton.addEventListener('animationend', () => {
+        validateButton.remove();
+      }, { once: true });
+
+      // Add class to trigger the destroy-validation animation
+      setTimeout(() => {
+        validateButton.classList.add('destroy-validation');
+      }, 1000);
+
+      return;
+    }
+
     // Set the flag to continue checking in localStorage
     localStorage.setItem('checkForProfiles', true);
 
@@ -191,7 +284,7 @@
     passwordPopup.style.transform = 'translateY(-50%)';
     passwordPopup.style.opacity = '0';
     passwordPopup.style.color = '#dadada';
-    passwordPopup.style.backgroundColor = randomHSLColor(15); // lightness 15% 
+    passwordPopup.style.backgroundColor = randomHSLColor(15); // lightness 15%
     passwordPopup.style.border = `1px solid ${randomHSLColor(35)}`; // lightness 35%
     passwordPopup.style.setProperty('border-radius', '0 4px 4px 0', 'important');
     passwordPopup.style.padding = '8px 16px';
@@ -342,7 +435,31 @@
     color: #83cf40;
     background-color: #2b4317;
     border: 1px solid #4b7328;
-    filter: none;
+    filter: brightness(1);
+  }
+
+  .validate-profiles.filter-unaccessible {
+    filter: brightness(1) hue-rotate(280deg) !important;
+  }
+
+  .validate-profiles.filter-unaccessible:hover {
+    filter: brightness(1.2) hue-rotate(80deg) !important;
+  }
+
+  .validate-profiles.destroy-validation {
+    animation: destroy-validation 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes destroy-validation {
+    0% {
+      transform: translateX(0%);
+    }
+    50% {
+      transform: translateX(25%);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
   }
 
   .validate-profiles:hover {
