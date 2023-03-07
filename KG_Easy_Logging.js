@@ -148,7 +148,7 @@
     const validateButton = document.querySelector('.validate-profiles');
     const filterSpeed = 1; // seconds
 
-    if (!accountSavedData) {
+    if (!accountSavedData || accountSavedData.length === 0) {
       console.log('No saved account data found.');
 
       // Add class to start animation
