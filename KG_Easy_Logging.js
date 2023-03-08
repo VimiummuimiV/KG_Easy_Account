@@ -193,17 +193,6 @@
   const accountsContainer = document.createElement('div');
   accountsContainer.classList.add('accounts');
 
-  // Create a button for validating profiles
-  const validateButton = document.createElement('button');
-  validateButton.classList.add('validate-profiles');
-  validateButton.textContent = 'validate';
-
-  // Attach the navigateToProfiles function to the click event of the validateButton
-  validateButton.addEventListener('click', validateProfiles);
-
-  // Append the validate button to the container
-  accountsContainer.appendChild(validateButton);
-
   // Loop through each account and create a button for it
   accountSavedData.forEach(account => {
     const [login, password, id] = account;
@@ -220,7 +209,22 @@
     accountsContainer.appendChild(button);
   });
 
-  // Append the container to the page
+  // Create a button for validating profiles
+  const validateButton = document.createElement('button');
+  validateButton.classList.add('validate-profiles');
+  const heavyCheckMark = '\u{2714}\u{FE0F}';
+  const profilesCount = Array.from(accountsContainer.querySelectorAll('.userAccount'))
+    .filter(el => !el.classList.contains('validate-profiles'))
+    .length;
+  validateButton.textContent = `validate ${profilesCount} ${heavyCheckMark}`;
+
+  // Attach the navigateToProfiles function to the click event of the validateButton
+  validateButton.addEventListener('click', validateProfiles);
+
+  // Append the validate button to the container
+  accountsContainer.appendChild(validateButton);
+
+  // Add the container to the page
   document.body.appendChild(accountsContainer);
 
   // Function to handle button click
@@ -250,7 +254,6 @@
       // Simply reload the page
       window.location.reload();
     }
-
   }
 
   // Add event listener to all buttons with class 'userAccount'
@@ -436,6 +439,7 @@
     background-color: #2b4317;
     border: 1px solid #4b7328;
     filter: brightness(1);
+    order: 1;
   }
 
   .validate-profiles.filter-unaccessible {
@@ -471,6 +475,7 @@
     background-color: #424242;
     border: none;
     overflow: hidden;
+    order: 2;
   }
 
   .userAccount:hover {
