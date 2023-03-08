@@ -13,17 +13,17 @@
 
   // Run only on klavogonki globally
   if ((window.location.protocol + "//" + window.location.host).includes("klavogonki.ru")) {
-    // Define the goToTempMail
-    function goToTempMail() {
-      let startX, startY;
+    // Function what will navigate to temp mail if mouse from current position moves to the right 10%+
+    // Also logs out from account if mouse from current position moves to the left 10%-
+    function mouseGesture() {
+      let startX;
 
       // Add a mousedown event listener to the window
       window.addEventListener('mousedown', function (event) {
         // Check if the left mouse button was pressed
         if (event.button === 0) {
-          // Store the starting X and Y coordinates of the mouse cursor
+          // Store the starting X coordinate of the mouse cursor
           startX = event.clientX;
-          startY = event.clientY;
 
           // Add mousemove and mouseup event listeners to the window
           window.addEventListener('mousemove', checkForDrag);
@@ -31,14 +31,17 @@
         }
       });
 
-      // Define the checkForDrag function, which checks if the mouse cursor has moved more than 10% of the viewport width or height
+      // Define the checkForDrag function, which checks if the mouse cursor has moved to the right or left
       function checkForDrag(event) {
-        const offsetX = Math.abs(event.clientX - startX);
-        const offsetY = Math.abs(event.clientY - startY);
+        const offsetX = event.clientX - startX;
 
-        // If the offset is greater than 30% of the viewport width or height, redirect to temp mail and remove event listeners
-        if (offsetX > (window.innerWidth * 0.3) || offsetY > (window.innerHeight * 0.3)) {
+        // If the offset is greater than 0, redirect to temp mail and remove event listeners
+        if (offsetX > 0) {
           window.location.href = "https://temp-mail.org/en/";
+          removeEventListeners();
+        } else {
+          // If the offset is less than or equal to 0, logout and remove event listeners
+          logout();
           removeEventListeners();
         }
       }
@@ -50,8 +53,8 @@
       }
     }
 
-    // Call the goToTempMail function
-    goToTempMail();
+    // Navigate to temp mail if mouse moves to right and logout if mouse moves to left
+    mouseGesture();
 
     function addProfileID() {
       const regex = /profile\/(\d+)/;
@@ -341,17 +344,32 @@
     getTempMailAddress();
 
     function restoreRegistrationFields() {
-      if (registerEmail && !registerEmail.value) {
-        // Get the login, password and email values from localStorage
-        const accountRegisterData = JSON.parse(localStorage.getItem('accountRegisterData'));
-        const login = accountRegisterData ? accountRegisterData[0] : '';
-        const password = accountRegisterData ? accountRegisterData[1] : '';
-        const email = accountRegisterData ? accountRegisterData[2] : '';
+      // Get the email value from the URL parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const emailFromUrl = urlParams.get('email');
 
-        // Fill the login, password and email fields with the values from localStorage
+      // Get the login, password and email values from localStorage
+      const accountRegisterData = JSON.parse(localStorage.getItem('accountRegisterData'));
+      const login = accountRegisterData ? accountRegisterData[0] : '';
+      const password = accountRegisterData ? accountRegisterData[1] : '';
+      const emailFromStorage = accountRegisterData ? accountRegisterData[2] : '';
+
+      // Check if email from URL parameter is different from email in localStorage
+      if (emailFromUrl && emailFromStorage !== emailFromUrl) {
+        // Update email value in localStorage with email from URL parameter
+        const updatedAccountRegisterData = [login, password, emailFromUrl];
+        localStorage.setItem('accountRegisterData', JSON.stringify(updatedAccountRegisterData));
+      }
+
+      // Fill the login, password and email fields with the values from localStorage
+      if (registerLogin) {
         registerLogin.value = login;
+      }
+      if (registerPass) {
         registerPass.value = registerConfirmPass.value = password;
-        registerEmail.value = email;
+      }
+      if (registerEmail) {
+        registerEmail.value = emailFromStorage;
       }
     }
 
@@ -496,7 +514,7 @@
     const refreshButton = document.querySelector('#click-to-refresh');
     const registerUrlDomain = 'https://klavogonki.ru/register/';
 
-    // Function to automatically delete email if the session in time of 5 minutes is out
+    // Function to automatically delete email if the session in time of N minutes is out
     function sessionTimeDifference() {
       // Get the current time
       const currentDate = new Date();
@@ -513,16 +531,20 @@
       // Calculate the time difference in minutes and seconds
       const timeDifference = getTimeDifference(currentDate, previousSession);
 
-      // If more than 5 minutes have passed, update the previous session time in local storage
-      if (timeDifference.minutes > 5) {
+      // If more than assigned minutes have passed, update the previous session time in local storage
+      if (timeDifference.minutes >= 20) {
         localStorage.setItem("previousSession", currentDate);
-        console.log("It's been more than 5 minutes since your last session!");
+        console.log("Session time is out. Deleting current temp mail address.");
         return true;
       } else {
         console.log(`Only ${timeDifference.minutes} minutes and ${timeDifference.seconds} seconds have passed since your last session.`);
+        // Update the previous session time in local storage with the current time
+        localStorage.setItem("previousSession", currentDate);
+        console.log("Updated previousSession in localStorage with current time:", currentDate);
         return false;
       }
     }
+
 
     // Function to calculate the time difference between two dates
     function getTimeDifference(currentDate, previousSession) {
