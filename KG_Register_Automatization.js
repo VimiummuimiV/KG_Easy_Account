@@ -17,6 +17,8 @@
     // Also logs out from account if mouse from current position moves to the left 10%-
     function mouseGesture() {
       let startX;
+      const screenWidth = window.screen.width;
+      const tenPercent = screenWidth * 0.1;
 
       // Add a mousedown event listener to the window
       window.addEventListener('mousedown', function (event) {
@@ -35,12 +37,12 @@
       function checkForDrag(event) {
         const offsetX = event.clientX - startX;
 
-        // If the offset is greater than 0, redirect to temp mail and remove event listeners
-        if (offsetX > 0) {
+        // If the offset is greater than or equal to ten percent of the screen width, redirect to temp mail and remove event listeners
+        if (offsetX >= tenPercent) {
           window.location.href = "https://temp-mail.org/en/";
           removeEventListeners();
-        } else {
-          // If the offset is less than or equal to 0, logout and remove event listeners
+        } else if (offsetX <= -tenPercent) {
+          // If the offset is less than or equal to negative ten percent of the screen width, logout and remove event listeners
           logout();
           removeEventListeners();
         }
@@ -53,7 +55,7 @@
       }
     }
 
-    // Navigate to temp mail if mouse moves to right and logout if mouse moves to left
+    // Navigate to temp mail if mouse moves to right by at least 10% of the screen width and logout if mouse moves to left by at least 10% of the screen width
     mouseGesture();
 
     function addProfileID() {
