@@ -140,7 +140,7 @@
         nickname = capitalizeLetter(nickname);
       }
 
-      // Randomly add underscore to nickname 
+      // Randomly add underscore to nickname
       // Also randomly capitalize the first letter after the underscore if exist
       if (includeUnderline) {
         const middleIndex = Math.floor(nickname.length / 2);
@@ -496,6 +496,43 @@
     const refreshButton = document.querySelector('#click-to-refresh');
     const registerUrlDomain = 'https://klavogonki.ru/register/';
 
+    // Function to automatically delete email if the session in time of 5 minutes is out
+    function sessionTimeDifference() {
+      // Get the current time
+      const currentDate = new Date();
+
+      // Get the previous session time from local storage
+      let previousSession = localStorage.getItem("previousSession");
+
+      // If the previous session time is not in local storage, create it with current time
+      if (!previousSession) {
+        previousSession = currentDate;
+        localStorage.setItem("previousSession", previousSession);
+      }
+
+      // Calculate the time difference in minutes and seconds
+      const timeDifference = getTimeDifference(currentDate, previousSession);
+
+      // If more than 5 minutes have passed, update the previous session time in local storage
+      if (timeDifference.minutes > 5) {
+        localStorage.setItem("previousSession", currentDate);
+        console.log("It's been more than 5 minutes since your last session!");
+        return true;
+      } else {
+        console.log(`Only ${timeDifference.minutes} minutes and ${timeDifference.seconds} seconds have passed since your last session.`);
+        return false;
+      }
+    }
+
+    // Function to calculate the time difference between two dates
+    function getTimeDifference(currentDate, previousSession) {
+      const timeDifference = currentDate.getTime() - new Date(previousSession).getTime();
+      const minutes = Math.floor(timeDifference / 60000);
+      const seconds = Math.floor((timeDifference % 60000) / 1000);
+      return { minutes, seconds };
+    }
+
+
     // Add a click event listener to the delete button
     deleteButton.addEventListener('click', function () {
       localStorage.setItem('confirmation_Status', 'welcome');
@@ -527,6 +564,11 @@
           console.log('Assigning proper status data to make observer work properly.');
           localStorage.setItem('confirmation_Status', 'welcome');
         }
+        // Delete used email address if localStorage key is expired OR session time is out
+        else if (status === 'expired' || sessionTimeDifference()) {
+          // Function already has logic to assign status welcome before deleting
+          deleteEmail();
+        }
         // Redirect to the register URL with the email parameter only
         else if (status === 'copied' && searchParams.has('registration')) {
           localStorage.setItem('confirmation_Status', 'waiting');
@@ -540,11 +582,6 @@
           logMessageWithDelay('The current URL contains the "registration" parameter.', 500);
           logMessageWithDelay('Changing status from copied to waiting.', 1000);
           logMessageWithDelay('Waiting for confirmation message.', 1500);
-        }
-        // Delete used email address
-        else if (status === 'expired') {
-          // Function already has logic to assign status welcome before deleting
-          deleteEmail();
         }
       }, 1000);
     }
